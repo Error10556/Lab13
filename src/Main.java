@@ -1,3 +1,6 @@
+import jdk.nashorn.internal.runtime.regexp.joni.exception.ValueException;
+
+import java.util.ArrayList;
 import java.util.Date;
 
 abstract class Media {
@@ -17,9 +20,12 @@ abstract class Media {
 class Book extends Media {
     @Override
     public String mediaKind() {
-        return "Book";
+        return mediaKindName();
     }
 
+    public static String mediaKindName() {
+        return "Book";
+    }
     private final String authors;
 
     private final int pageCount;
@@ -47,6 +53,10 @@ class Book extends Media {
 class Video extends Media {
     @Override
     public String mediaKind() {
+        return mediaKindName();
+    }
+
+    public static String mediaKindName() {
         return "Video";
     }
 
@@ -80,6 +90,10 @@ class Video extends Media {
 class Newspaper extends Media {
     @Override
     public String mediaKind() {
+        return mediaKindName();
+    }
+
+    public static String mediaKindName() {
         return "Newspaper";
     }
 
@@ -97,6 +111,67 @@ class Newspaper extends Media {
     @Override
     public String toString() {
         return String.format("Newspaper (%s): \"%s\"", issue, getName());
+    }
+}
+
+class GenericLibrary<T extends Media> {
+    private final ArrayList<T> list = new ArrayList<>();
+
+    public ArrayList<T> searchByName(String name) {
+        ArrayList<T> res = new ArrayList<>();
+        for (T t : list) {
+            if (t.getName().compareToIgnoreCase(name) == 0) {
+                res.add(t);
+            }
+        }
+        return res;
+    }
+
+    public void add(T item) {
+        list.add(item);
+    }
+
+    public boolean remove(T item) {
+        return list.remove(item);
+    }
+}
+
+class NonGenericLibrary {
+    ArrayList<Media> list = new ArrayList<>();
+
+    private final String type;
+
+    public NonGenericLibrary(String mediaKindName) {
+        type = mediaKindName;
+    }
+
+    public ArrayList<Media> searchByName(String name) {
+        ArrayList<Media> res = new ArrayList<>();
+        for (Media t : list) {
+            if (t.getName().compareToIgnoreCase(name) == 0) {
+                res.add(t);
+            }
+        }
+        return res;
+    }
+
+    private void assertType(Media media) throws ValueException {
+        if (media.mediaKind().compareTo(type) == 0)
+            throw new ValueException(String.format("Expected %s type, got %s", type, media.mediaKind()));
+    }
+
+    public void add(Media media) throws ValueException {
+        assertType(media);
+        list.add(media);
+    }
+
+    public boolean remove(Media media) throws ValueException {
+        assertType(media);
+        return list.remove(media);
+    }
+
+    public String getMediaKindName() {
+        return type;
     }
 }
 
